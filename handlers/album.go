@@ -1,19 +1,23 @@
 package handlers
 
 import (
-	"net/http"
-
 	"github.com/SteliosKoulinas/recordStoreApi/db"
 	"github.com/SteliosKoulinas/recordStoreApi/models"
+	"github.com/SteliosKoulinas/recordStoreApi/services"
 
 	"github.com/gin-gonic/gin"
 )
 
 // GET all albums
 
+var albumService = services.AlbumService{}
+
 func GetAlbums(c *gin.Context) {
-	var albums []models.Album
-	db.DB.Find(&albums)
+	albums, err := albumService.GetAll()
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
 	c.JSON(200, albums)
 }
 
@@ -21,10 +25,8 @@ func GetAlbums(c *gin.Context) {
 func GetAlbum(c *gin.Context) {
 	id := c.Param("id")
 
-	var album models.Album
-	result := db.DB.First(&album, id)
-
-	if result.Error != nil {
+	album, err := albumService.GetByID(id)
+	if err != nil {
 		c.JSON(404, gin.H{"error": "Album not found"})
 		return
 	}
@@ -33,63 +35,68 @@ func GetAlbum(c *gin.Context) {
 }
 
 // create Album
-func CreateAlbum(c *gin.Context) {
-	var album models.Album
 
-	if err := c.ShouldBindJSON(&album); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+func CreateAlbum(c *gin.Context) {
+	var input models.Album
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	//if exists already
-	var existing models.Album
-	if err := db.DB.Where("artist = ? AND title = ?", album.Artist, album.Title).First(&existing).Error; err == nil {
-		c.JSON(409, gin.H{"error": "Album already exists"})
-		return
-	}
-	if err := db.DB.Create(&album).Error; err != nil {
+
+	if err := albumService.Create(&input); err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(201, album)
+	c.JSON(201, input)
 }
 
 // UPDATE album
 func UpdateAlbum(c *gin.Context) {
 	id := c.Param("id")
 
-	var album models.Album
-	if err := db.DB.First(&album, id).Error; err != nil {
+	// First: does this album exist?
+	existing, err := albumService.GetByID(id)
+	if err != nil {
 		c.JSON(404, gin.H{"error": "Album not found"})
 		return
 	}
 
+	// Bind JSON to a temp struct
 	var input models.Album
 	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+		c.JSON(400, gin.H{"error": "Invalid JSON"})
 		return
 	}
 
-	album.Artist = input.Artist
-	album.Title = input.Title
-	album.Year = input.Year
+	// Update fields
+	existing.Artist = input.Artist
+	existing.Title = input.Title
+	existing.Year = input.Year
 
-	db.DB.Save(&album)
+	// Save changes
+	if err := db.DB.Save(&existing).Error; err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
 
-	c.JSON(200, album)
+	c.JSON(200, existing)
 }
 
 // DELETE album
 func DeleteAlbum(c *gin.Context) {
 	id := c.Param("id")
 
-	var album models.Album
-	if err := db.DB.First(&album, id).Error; err != nil {
-		c.JSON(404, gin.H{"error": "Album not found"})
+	err := albumService.Delete(id)
+	if err != nil {
+		if err.Error() == "record not found" {
+			c.JSON(404, gin.H{"error": "Album not found"})
+			return
+		}
+		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
 
-	db.DB.Delete(&album)
-
-	c.JSON(200, gin.H{"message": "Deleted"})
+	c.JSON(200, gin.H{"message": "Album deleted"})
 }
