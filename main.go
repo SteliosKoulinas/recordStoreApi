@@ -9,7 +9,7 @@ import (
 
 func main() {
 	db.Connect()
-	db.DB.AutoMigrate(&models.Album{})
+	db.DB.AutoMigrate(&models.Album{}, &models.Users{})
 	r := gin.Default()
 
 	api := r.Group("/api")
