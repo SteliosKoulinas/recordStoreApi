@@ -31,5 +31,5 @@ func main() {
 			protected.DELETE("/album/:id", handlers.DeleteAlbum)
 		}
 	}
-	r.Run(":8080")
+	r.Run("127.0.0.1:3187")
 }
