@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/SteliosKoulinas/recordStoreApi/db"
 	"github.com/SteliosKoulinas/recordStoreApi/handlers"
+	"github.com/SteliosKoulinas/recordStoreApi/middleware"
 	"github.com/SteliosKoulinas/recordStoreApi/models"
 	"github.com/gin-gonic/gin"
 )
@@ -14,11 +15,21 @@ func main() {
 
 	api := r.Group("/api")
 	{
+		api.POST("/register", handlers.Register)
+		api.POST("/login", handlers.Login)
+
 		api.GET("/albums", handlers.GetAlbums)
-		api.POST("/albums", handlers.CreateAlbum)
-		api.GET("/album/:id", handlers.GetAlbum)
-		api.PUT("/album/:id", handlers.UpdateAlbum)
-		api.DELETE("/album/:id", handlers.DeleteAlbum)
+		api.GET("/users", handlers.GetUsers)
+
+		protected := api.Group("/")
+		protected.Use(middleware.AuthMiddleware())
+		{
+			//protected.GET("/albums", handlers.GetAlbums)
+			protected.POST("/albums", handlers.CreateAlbum)
+			protected.GET("/album/:id", handlers.GetAlbum)
+			protected.PUT("/album/:id", handlers.UpdateAlbum)
+			protected.DELETE("/album/:id", handlers.DeleteAlbum)
+		}
 	}
 	r.Run(":8080")
 }
