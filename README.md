@@ -69,7 +69,7 @@ cp .env.example .env
 cp .env.example .env
 ```
 
-Then edit `.env` with your database credentials and JWT secret. **⚠️ Important: Never commit `.env` to version control!**
+Then edit `.env` with your database credentials and JWT secret. 
 
 4. Build and run with Docker Compose:
 ```bash

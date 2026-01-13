@@ -34,7 +34,7 @@ services:
     depends_on:
       recordstore:
         condition: service_healthy
-    restart: on-failure
+    restart: unless-stopped
     env_file:
       - .env
 
