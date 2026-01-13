@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.25.2-alpine AS builder
+FROM docker.io/library/golang:1.25.2-alpine AS builder
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o recordStoreApi .
 
 # Runtime stage
-FROM alpine:latest
+FROM docker.io/library/alpine:latest
 
 RUN apk --no-cache add ca-certificates
 
