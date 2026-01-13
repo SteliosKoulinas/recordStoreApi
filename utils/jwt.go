@@ -1,12 +1,21 @@
 package utils
 
 import (
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte("CHANGE_ME_TO_A_SECURE_KEY")
+func getJWTKey() []byte {
+	key := os.Getenv("JWT_SECRET")
+	if key == "" {
+		key = "CHANGE_ME_TO_A_SECURE_KEY"
+	}
+	return []byte(key)
+}
+
+var jwtKey = getJWTKey()
 
 type Claims struct {
 	UserID uint `json:"user_id"`
