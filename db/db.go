@@ -3,21 +3,21 @@ package db
 import (
 	"fmt"
 	"log"
+	"os"
 
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	_ "modernc.org/sqlite"
 )
 
 var DB *gorm.DB
 
 func Connect() {
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL environment variable not set")
+	}
 
-	/*dsn := "host=localhost user=stylianoskoulinas password=zPMa]W?dxY5M dbname=musicdb port=5432 sslmode=disable"
-
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})*/
-
-	db, err := gorm.Open(sqlite.Open("records.db"), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Failed to connect to database: ", err)
 	}

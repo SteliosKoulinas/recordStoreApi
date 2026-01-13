@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  recordstore:
+    image: postgres:17-alpine
+    container_name: recordstore_db
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    env_file:
+      - .env
+
+  api:
+    build: .
+    container_name: recordstore_api
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: ${PORT}
+      GIN_MODE: ${GIN_MODE}
+      ENVIRONMENT: ${ENVIRONMENT}
+    ports:
+      - "${PORT}:3187"
+    depends_on:
+      recordstore:
+        condition: service_healthy
+    restart: on-failure
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:

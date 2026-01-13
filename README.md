@@ -8,14 +8,17 @@ A RESTful API built with Go for managing a record store application. This API pr
 - **User Management**: Register and manage user accounts
 - **Album Management**: Create, read, update, and delete albums
 - **Protected Endpoints**: Secure endpoints requiring JWT authentication
-- **SQLite Database**: Lightweight persistent data storage with GORM ORM
+- **PostgreSQL Database**: Robust persistent data storage with GORM ORM
+- **Docker Support**: Complete Docker and Docker Compose setup for easy deployment
 
 ## Tech Stack
 
 - **Framework**: [Gin](https://github.com/gin-gonic/gin) - Fast HTTP web framework
-- **Database**: SQLite with [GORM](https://gorm.io/) - ORM for database operations
+- **Database**: PostgreSQL with [GORM](https://gorm.io/) - ORM for database operations
 - **Authentication**: JWT (JSON Web Tokens)
 - **Language**: Go 1.25.2
+- **Containerization**: Docker & Docker Compose
+- **Environment Management**: godotenv
 
 ## Project Structure
 
@@ -45,9 +48,10 @@ recordStoreApi/
 
 ### Prerequisites
 
-- Go 1.25.2 or higher
+- Docker and Docker Compose installed
+- Or Go 1.25.2 or higher (for local development)
 
-### Setup
+### Quick Start with Docker
 
 1. Clone the repository:
 ```bash
@@ -55,17 +59,58 @@ git clone https://github.com/SteliosKoulinas/recordStoreApi.git
 cd recordStoreApi
 ```
 
-2. Install dependencies:
+2. Copy the environment template:
+```bash
+cp .env.example .env
+```
+
+3. Copy and configure the environment file:
+```bash
+cp .env.example .env
+```
+
+Then edit `.env` with your database credentials and JWT secret. **⚠️ Important: Never commit `.env` to version control!**
+
+4. Build and run with Docker Compose:
+```bash
+docker-compose up --build
+```
+
+The API will be available at `http://localhost:3187`
+
+**First time setup note:** The database containers and volumes will be created automatically on first run.
+
+### Stopping the Application
+
+```bash
+# Stop all containers
+docker-compose down
+
+# Stop and remove volumes (clean database)
+docker-compose down -v
+```
+
+### Local Development Setup
+
+1. Clone and navigate to the project:
+```bash
+git clone https://github.com/SteliosKoulinas/recordStoreApi.git
+cd recordStoreApi
+```
+
+2. Create `.env` file with your local database configuration
+
+3. Install dependencies:
 ```bash
 go mod download
 ```
 
-3. Run the application:
+4. Run the application:
 ```bash
 go run main.go
 ```
 
-The API will start on `http://127.0.0.1:3187`
+### Setup
 
 ## API Endpoints
 
@@ -85,38 +130,125 @@ The API will start on `http://127.0.0.1:3187`
 - `PUT /api/album/:id` - Update an album
 - `DELETE /api/album/:id` - Delete an album
 
-## Authentication
+## Authentication Examples
 
-Protected endpoints require a valid JWT token to be included in the `Authorization` header:
+### Register a new user
+```bash
+curl -X POST http://localhost:3187/api/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "yourpassword"
+  }'
+```
 
+### Login
+```bash
+curl -X POST http://localhost:3187/api/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "yourpassword"
+  }'
+```
+
+### Create an album (Protected)
+```bash
+curl -X POST http://localhost:3187/api/albums \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  -d '{
+    "artist": "The Beatles",
+    "title": "Abbey Road",
+    "year": 1969
+  }'
+```
+
+Protected endpoints require a valid JWT token in the `Authorization` header:
 ```
 Authorization: Bearer <your_jwt_token>
 ```
 
-Obtain a token by logging in or registering via the `/api/login` or `/api/register` endpoints.
+## Environment Variables
 
-## Environment
+### Required Variables
+- `DATABASE_URL` - Full PostgreSQL connection string
+- `JWT_SECRET` - Secret key for JWT token signing
 
-The API runs on port `3187` by default. You can modify this in `main.go`:
+### Optional Variables
+- `PORT` - Server port (default: 3187)
+- `GIN_MODE` - `debug` or `release` (default: debug)
+- `ENVIRONMENT` - `development` or `production` (default: development)
 
-```go
-r.Run("127.0.0.1:3187")
-```
+**⚠️ Security:** Never commit actual credentials to `.env`. Use `.env.example` as template and configure with real values locally.
 
 ## Database
 
-The application uses SQLite for data persistence. The database file is automatically created and initialized on startup with the `Album` and `Users` models.
+The application uses PostgreSQL for data persistence. Tables for `Album` and `Users` models are automatically created on startup using GORM's `AutoMigrate`.
+
+When running with Docker Compose:
+- PostgreSQL runs in the `recordstore` service
+- Database volume is persisted in `postgres_data`
+- Database is automatically initialized based on `DATABASE_URL`
+
+## Docker
+
+### Docker Compose Commands
+
+```bash
+# Build and start all services
+docker-compose up --build
+
+# Start services (without rebuild)
+docker-compose up
+
+# Start in background
+docker-compose up -d
+
+# Stop all containers
+docker-compose down
+
+# Stop and remove volumes (deletes database data)
+docker-compose down -v
+
+# View logs
+docker-compose logs -f
+
+# View specific service logs
+docker-compose logs -f api
+docker-compose logs -f recordstore
+```
+
+### Build Docker Image Manually
+```bash
+docker build -t recordstore-api .
+
+# Run with environment variables
+docker run -p 3187:3187 \
+  -e DATABASE_URL="your-database-url" \
+  -e JWT_SECRET="your-secret-key" \
+  recordstore-api
+```
 
 ## Dependencies
 
 Key dependencies include:
 - `github.com/gin-gonic/gin` - Web framework
 - `github.com/golang-jwt/jwt/v5` - JWT token handling
-- `gorm.io/driver/sqlite` - SQLite driver
+- `gorm.io/driver/postgres` - PostgreSQL driver
 - `gorm.io/gorm` - ORM framework
 - `golang.org/x/crypto` - Cryptographic functions for password hashing
+- `github.com/joho/godotenv` - Environment variable loading
 
 See `go.mod` for the complete list of dependencies.
+
+## Security Notes
+
+- Never commit `.env` file to version control
+- Use strong, randomly generated `JWT_SECRET` in production
+- Change default database credentials
+- Use `GIN_MODE=release` in production
+- Consider using SSL/TLS for database connections in production (change `sslmode=disable`)
 
 ## License
 
