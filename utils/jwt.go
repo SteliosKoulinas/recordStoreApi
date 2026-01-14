@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"log"
 	"os"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 func getJWTKey() []byte {
 	key := os.Getenv("JWT_SECRET")
 	if key == "" {
-		key = "CHANGE_ME_TO_A_SECURE_KEY"
+		log.Fatal("JWT_SECRET environment variable is not set")
 	}
 	return []byte(key)
 }
