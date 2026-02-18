@@ -171,16 +171,47 @@ Authorization: Bearer <your_jwt_token>
 
 ## Environment Variables
 
+### Setup Instructions
+
+1. Copy the example environment file:
+```bash
+cp .env.example .env
+```
+
+2. Edit `.env` with your configuration values:
+```bash
+# For macOS/Linux
+nano .env
+
+# For VS Code
+code .env
+```
+
+3. Do NOT commit `.env` to version control. The `.env.example` file serves as a template for developers.
+
 ### Required Variables
-- `DATABASE_URL` - Full PostgreSQL connection string
-- `JWT_SECRET` - Secret key for JWT token signing
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:password@localhost:5432/recordstore` |
+| `JWT_SECRET` | Secret key for JWT token signing (use a strong, random string) | `your_secret_key_here_change_in_production` |
 
 ### Optional Variables
-- `PORT` - Server port (default: 3187)
-- `GIN_MODE` - `debug` or `release` (default: debug)
-- `ENVIRONMENT` - `development` or `production` (default: development)
 
-**⚠️ Security:** Never commit actual credentials to `.env`. Use `.env.example` as template and configure with real values locally.
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `PORT` | Server port | `3187` |
+| `GIN_MODE` | Server mode (`debug` or `release`) | `debug` |
+| `ENVIRONMENT` | Environment type (`development` or `production`) | `development` |
+
+### Production Values ⚠️
+
+**For production deployments:**
+- Use a strong, randomly generated `JWT_SECRET` (minimum 32 characters)
+- Use SSL connections for database: `postgresql://user:password@hostname:5432/recordstore?sslmode=require`
+- Set `GIN_MODE=release`
+- Set `ENVIRONMENT=production`
+- Store secrets securely (use environment variables, secrets manager, or CI/CD platform)
 
 ## Database
 
